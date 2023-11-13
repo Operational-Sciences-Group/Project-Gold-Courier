@@ -16,10 +16,11 @@ filedate=$(date +"%m_%d_%Y")
 clear
 
 # Takes user input to determine audit 
-printf "${yellow}Please select from the following options:${clear} \n1)Full Audit \n2)Audit Summary \n3)Audit Rules Report \n4)Add Auditing Rules \n"
+printf "${yellow}Please select from the following options:${clear} \n1)Full Audit \n2)Audit Summary \n3)Audit Rules Report \n4)Add Auditing Rules \n5)View auditd Configuration \n6)Compress and Save Logs \n7)Remove Old Logs \n"
 read audit_level
 
 if [[ $audit_level = 1 ]]; then
+    clear
     # Prompt the user for a date range
     echo -e "${yellow}***Welcome Auditor***${clear}"
     echo -e "${green}The date is: ${date}${clear}"
@@ -59,9 +60,9 @@ if [[ $audit_level = 1 ]]; then
     echo -e "${green}Checking for ${red}deleted users... ${clear}"
     ausearch -i --start $start_date --end $end_date -m DEL_USER
 
-    # Check for removable media
+    # Check for removable media//grep to remove fprintd
     echo -e "${green}Checking for the use of removable media... ${clear}"
-    ausearch -i --start $start_date --end $end_date -k removable-media
+    ausearch -i --start $start_date --end $end_date -k removable-media | grep -0 "/run/media"
 
     # Check for possible password tampering (requires audit rule 1 below)
     echo -e "${green}Zipping possible password changes... ${clear}"
@@ -76,6 +77,8 @@ if [[ $audit_level = 1 ]]; then
     ausearch --start $start_date --end $end_date -k allcmds | gzip > CommandAudit_"${filedate}".gz
 
 elif [[ $audit_level = 2 ]]; then
+    # Clear Screen
+    clear
     # Prompt user for date range
     echo -e "${yellow}***Welcome Auditor***${clear}"
     echo -e "${green}The date is: ${date}${clear}"
@@ -84,8 +87,8 @@ elif [[ $audit_level = 2 ]]; then
     echo "Enter the end date (MM/DD/YYYY): "
     read end_date
     
-    aureport --start $start_date --end $end_date 00:00:00
-    echo -e "${red}***Take note that the end time is 00:00:00!***${clear}" 
+    aureport --input-logs --start $start_date --end $end_date 
+    echo -e "${red}***Take note that the end time is 23:59:59!***${clear}" 
 
 elif [[ $audit_level = 3 ]]; then
     # Call up the rules
@@ -108,7 +111,7 @@ elif [[ $audit_level = 4 ]]; then
             echo "-a always,exit -F arch=b32 -S execve -F key=allcmds" >> /etc/audit/rules.d/audit.rules
             echo "-a always,exit -F arch=b64 -S execve -F key=allcmds" >> /etc/audit/rules.d/audit.rules
 
-	elif [[ $rule = 3 ]]; then
+	    elif [[ $rule = 3 ]]; then
             # Audits removable media
             echo "-a always,exit -F arch=b64 -S mount -S umount2 -k removable-media" >> /etc/audit/rules.d/audit.rules
 	
@@ -120,10 +123,38 @@ elif [[ $audit_level = 4 ]]; then
             # Fails out of rules addition
             echo -e "${red}Invalid Choice. Please enter a number between 1 and 2.${clear}"
             sleep 3
-            fi
+
+	    fi
+
+elif [[ $audit_level = 5 ]]; then
+    # Clear Screen
+    clear
+    # Cats the audit conf
+    cat /etc/audit/auditd.conf
+
+elif [[ $audit_level = 6 ]]; then
+    # Clear Screen
+    clear
+    # Copy and compress logfile
+    cp /var/log/audit/audit.log /var/log/audit/${filedate}_audit.bak
+    gzip /var/log/audit/${filedate}audit.bak
+
+elif [[ $audit_level = 7 ]]; then
+    # Clears logs if yes is typed
+    printf "${red}WARNING THIS WILL REMOVE ALL LOGS NOT ARCHIVED, TYPE YES TO CONTINUE${clear}\n"
+    read permission
     
+        if [[ $permission = YES ]];then
+            #truncate log to zero size
+            truncate -s 0 /var/log/audit/audit.log
+        else
+            #fails out
+            echo -e "${red}INVALID${clear}"
+    
+        fi
+
 else
     # Fails out the program
-    echo -e "${red}Invalid Choice. Please enter a number between 1 and 3.${clear}"
+    echo -e "${red}Invalid Choice. Please enter a number between 1 and 7.${clear}"
     sleep 3
 fi
