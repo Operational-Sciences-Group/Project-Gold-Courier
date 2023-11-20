@@ -16,7 +16,7 @@ filedate=$(date +"%m_%d_%Y")
 clear
 
 # Takes user input to determine audit 
-printf "${yellow}Please select from the following options:${clear} \n1)Full Audit \n2)Audit Summary \n3)Audit Rules Report \n4)Add Auditing Rules \n5)View auditd Configuration \n6)Compress and Save Logs \n7)Remove Old Logs \n"
+printf "${yellow}Please select from the following options:${clear} \n1)Full Audit \n2)Audit Summary \n3)Audit Rules Report \n4)Add Auditing Rules \n5)View auditd Configuration \n6)Compress and Save Logs \n7)Remove Old Logs \n8)Service Controls for auditd \n"
 read audit_level
 
 if [[ $audit_level = 1 ]]; then
@@ -91,6 +91,8 @@ elif [[ $audit_level = 2 ]]; then
     echo -e "${red}***Take note that the end time is 23:59:59!***${clear}" 
 
 elif [[ $audit_level = 3 ]]; then
+    # Clear Screen
+    clear
     # Call up the rules
     auditctl -l
 
@@ -111,7 +113,7 @@ elif [[ $audit_level = 4 ]]; then
             echo "-a always,exit -F arch=b32 -S execve -F key=allcmds" >> /etc/audit/rules.d/audit.rules
             echo "-a always,exit -F arch=b64 -S execve -F key=allcmds" >> /etc/audit/rules.d/audit.rules
 
-	    elif [[ $rule = 3 ]]; then
+	elif [[ $rule = 3 ]]; then
             # Audits removable media
             echo "-a always,exit -F arch=b64 -S mount -S umount2 -k removable-media" >> /etc/audit/rules.d/audit.rules
 	
@@ -121,7 +123,7 @@ elif [[ $audit_level = 4 ]]; then
 
         else
             # Fails out of rules addition
-            echo -e "${red}Invalid Choice. Please enter a number between 1 and 2.${clear}"
+            echo -e "${red}Invalid Choice. Please enter a number between 1 and 3.${clear}"
             sleep 3
 
 	    fi
@@ -129,7 +131,7 @@ elif [[ $audit_level = 4 ]]; then
 elif [[ $audit_level = 5 ]]; then
     # Clear Screen
     clear
-    # Cats the audit conf
+    # Cats' the audit conf
     cat /etc/audit/auditd.conf
 
 elif [[ $audit_level = 6 ]]; then
@@ -144,7 +146,7 @@ elif [[ $audit_level = 7 ]]; then
     printf "${red}WARNING THIS WILL REMOVE ALL LOGS NOT ARCHIVED, TYPE YES TO CONTINUE${clear}\n"
     read permission
     
-        if [[ $permission = YES ]];then
+        if [[ $permission = YES ]]; then
             #truncate log to zero size
             truncate -s 0 /var/log/audit/audit.log
         else
@@ -153,8 +155,30 @@ elif [[ $audit_level = 7 ]]; then
     
         fi
 
+elif [[ $audit_level = 8 ]]; then
+    # Clear Screen
+    clear
+    #allows for control of auditd
+    printf "${red}!!!WARNING THESE CONTROLS WILL DIRECTLY INTERACT WITH auditd!!!${clear} \n${green}Please select from the following options:${clear} \n1)Status \n2)Restart \n3)Stop (MUST TYPE OUT) \n"
+    read control
+    
+        if [[ $control = 1 ]]; then
+        service auditd status
+
+        elif [[ $control = 2 ]]; then
+        service auditd restart
+    
+        elif [[ $control = Stop ]]; then 
+        service auditd stop
+
+        else 
+        echo -e "${red}INVALID${clear}"
+
+        fi
+
 else
     # Fails out the program
-    echo -e "${red}Invalid Choice. Please enter a number between 1 and 7.${clear}"
+    echo -e "${red}Invalid Choice. Please enter a number between 1 and 8.${clear}"
     sleep 3
+
 fi
