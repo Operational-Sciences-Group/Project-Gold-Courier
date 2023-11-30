@@ -1,4 +1,3 @@
-# ReadmeTemplate
 
 A simple tool to interact with auditd
 
