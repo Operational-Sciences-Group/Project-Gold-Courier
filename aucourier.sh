@@ -113,7 +113,7 @@ elif [[ $audit_level = 4 ]]; then
             echo "-a always,exit -F arch=b32 -S execve -F key=allcmds" >> /etc/audit/rules.d/audit.rules
             echo "-a always,exit -F arch=b64 -S execve -F key=allcmds" >> /etc/audit/rules.d/audit.rules
 
-	elif [[ $rule = 3 ]]; then
+	    elif [[ $rule = 3 ]]; then
             # Audits removable media
             echo "-a always,exit -F arch=b64 -S mount -S umount2 -k removable-media" >> /etc/audit/rules.d/audit.rules
 	
